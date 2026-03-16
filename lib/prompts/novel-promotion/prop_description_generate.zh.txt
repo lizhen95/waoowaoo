@@ -17,38 +17,32 @@
 ## 输出格式
 
 返回JSON对象：
-```json
 {
   "name": "道具名称",
   "visualDescription": "详细的视觉描述",
   "imagePrompt": "用于AI图像生成的提示词（英文）"
 }
-```
 
 ## 示例
 
 输入：
-```json
 {
   "name": "古董怀表",
   "category": "electronic",
   "description": "金色的古董怀表，表面有精细的雕刻",
   "artStyle": "steampunk"
 }
-```
 
 输出：
-```json
 {
   "name": "古董怀表",
   "visualDescription": "一块精致的金色怀表，采用蒸汽朋克风格设计。表壳由抛光的黄铜制成，表面布满精细的齿轮纹理和维多利亚时代的花纹雕刻。表盖打开时露出复杂的机械装置，可见精密的齿轮、弹簧和摆轮。表面有轻微的氧化痕迹，显示其年代感。金色的指针在白色表盘上清晰可见，周围环绕着罗马数字。整体散发出古老而精妙的工业美感。",
   "imagePrompt": "Antique brass pocket watch, steampunk style, intricate gear engravings on cover, mechanical gears visible inside, aged patina, Roman numerals on face, golden hands, Victorian era craftsmanship, detailed macro photography, warm golden lighting"
 }
-```
 
 现在，请为以下道具生成详细描述：
 
 道具名称：{propName}
-���类：{category}
+类别：{category}
 初始描述：{description}
 艺术风格：{artStyle}

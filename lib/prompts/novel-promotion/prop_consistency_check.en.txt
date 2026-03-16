@@ -25,7 +25,6 @@ You are a professional quality assurance specialist. Your task is to check prop 
 ## Output Format
 
 Return a JSON object:
-```json
 {
   "totalProps": Total number of props,
   "consistencyScore": Consistency score (0-100),
@@ -41,12 +40,10 @@ Return a JSON object:
   ],
   "summary": "Overall assessment"
 }
-```
 
 ## Example
 
 Input:
-```json
 {
   "props": [
     {
@@ -68,10 +65,8 @@ Input:
     }
   ]
 }
-```
 
 Output:
-```json
 {
   "totalProps": 1,
   "consistencyScore": 40,
@@ -87,7 +82,6 @@ Output:
   ],
   "summary": "Found 1 high-severity issue. Recommend correcting the color inconsistency to improve visual continuity."
 }
-```
 
 Now, please check the consistency of the following props:
 

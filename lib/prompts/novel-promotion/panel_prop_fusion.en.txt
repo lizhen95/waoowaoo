@@ -27,7 +27,6 @@ You are a professional storyboard fusion expert. Your task is to fuse prop, char
 ## Output Format
 
 Return a JSON object:
-```json
 {
   "panelIndex": Panel index,
   "originalImagePrompt": "Original image prompt",
@@ -39,12 +38,10 @@ Return a JSON object:
     }
   ]
 }
-```
 
 ## Example
 
 Input:
-```json
 {
   "panelIndex": 5,
   "imagePrompt": "A modern office, sunlight streaming through windows",
@@ -74,10 +71,8 @@ Input:
     }
   ]
 }
-```
 
 Output:
-```json
 {
   "panelIndex": 5,
   "originalImagePrompt": "A modern office, sunlight streaming through windows",
@@ -93,7 +88,6 @@ Output:
     }
   ]
 }
-```
 
 Now, please fuse the following information into the storyboard image prompt:
 

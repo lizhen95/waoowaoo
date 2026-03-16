@@ -17,34 +17,28 @@ You are a professional visual designer. Your task is to generate detailed visual
 ## Output Format
 
 Return a JSON object:
-```json
 {
   "name": "Prop name",
   "visualDescription": "Detailed visual description",
   "imagePrompt": "Prompt for AI image generation (English)"
 }
-```
 
 ## Example
 
 Input:
-```json
 {
   "name": "Antique pocket watch",
   "category": "electronic",
   "description": "Golden antique pocket watch with fine engravings on the surface",
   "artStyle": "steampunk"
 }
-```
 
 Output:
-```json
 {
   "name": "Antique pocket watch",
   "visualDescription": "An exquisite golden pocket watch in steampunk style design. The case is made of polished brass with intricate gear textures and Victorian-era floral engravings covering the surface. When opened, the cover reveals complex mechanical components with visible gears, springs, and balance wheels. The surface shows slight oxidation marks indicating its age. Golden hands are clearly visible against the white dial, surrounded by Roman numerals. The overall piece radiates an ancient yet ingenious industrial aesthetic.",
   "imagePrompt": "Antique brass pocket watch, steampunk style, intricate gear engravings on cover, mechanical gears visible inside, aged patina, Roman numerals on face, golden hands, Victorian era craftsmanship, detailed macro photography, warm golden lighting"
 }
-```
 
 Now, please generate detailed descriptions for the following prop:
 

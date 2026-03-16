@@ -21,16 +21,14 @@ You are a professional prop analyst. Your task is to extract all props that are 
 
 Return only the following JSON format. Prohibit returning any extra content besides JSON. ⚠️ All quotation marks ("''等) in JSON string values must be replaced with 「」, strictly prohibit unescaped English double quotes ".
 
-{
-  "props": [
+[
     {
       "name": "Prop name",
       "category": "Category",
       "description": "Concise description (20-50 words)",
       "appearances": Number of appearances
     }
-  ]
-}
+]
 
 ## Example
 
@@ -38,16 +36,14 @@ Input screenplay:
 "Zhang San picked up his phone and made a call. He wore a black suit and a gold watch. There was a painting on the wall."
 
 Output:
-{
-  "props": [
+[
     {
       "name": "Phone",
       "category": "electronic",
       "description": "Black smartphone used to make a call",
       "appearances": 1
     }
-  ]
-}
+]
 
 Note: The black suit, gold watch, and painting on the wall are not extracted because they are outside the extraction scope (clothing, decoration, furniture, food, nature).
 

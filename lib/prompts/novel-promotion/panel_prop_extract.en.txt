@@ -15,7 +15,6 @@ You are a professional storyboard analyst. Your task is to extract all props tha
 ## Output Format
 
 Return a JSON object:
-```json
 {
   "panelIndex": Panel index,
   "props": [
@@ -30,7 +29,6 @@ Return a JSON object:
     }
   ]
 }
-```
 
 ## Example
 
@@ -38,7 +36,6 @@ Input storyboard description:
 "Panel 3: Zhang San sits in an office, holding a pen in his hand, signing a document. On the desk are a laptop and a cup of coffee."
 
 Output:
-```json
 {
   "panelIndex": 3,
   "props": [
@@ -80,7 +77,6 @@ Output:
     }
   ]
 }
-```
 
 Now, please extract props from the following storyboard description:
 

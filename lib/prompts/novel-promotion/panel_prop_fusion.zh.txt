@@ -27,7 +27,6 @@
 ## 输出格式
 
 返回JSON对象：
-```json
 {
   "panelIndex": 分镜索引,
   "originalImagePrompt": "原始图像提示词",
@@ -39,12 +38,10 @@
     }
   ]
 }
-```
 
 ## 示例
 
 输入：
-```json
 {
   "panelIndex": 5,
   "imagePrompt": "一个现代办公室，阳光透过窗户照进来",
@@ -74,10 +71,8 @@
     }
   ]
 }
-```
 
 输出：
-```json
 {
   "panelIndex": 5,
   "originalImagePrompt": "一个现代办公室，阳光透过窗户照进来",
@@ -93,7 +88,6 @@
     }
   ]
 }
-```
 
 现在，请融合以下信息到分镜图像提示词中：
 
