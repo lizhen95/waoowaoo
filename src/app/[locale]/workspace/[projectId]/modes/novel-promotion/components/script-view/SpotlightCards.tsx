@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { MouseEvent } from 'react'
 import type { Character, CharacterAppearance, Location } from '@/types/project'
+import type { Prop } from '@/lib/query/hooks/useProps'
 import { MediaImageWithLoading } from '@/components/media/MediaImageWithLoading'
 import { AppIcon } from '@/components/ui/icons'
 import ImagePreviewModal from '@/components/ui/ImagePreviewModal'
@@ -262,6 +263,95 @@ export function SpotlightLocationCard({
         <div className={`text-sm font-bold truncate ${isActive ? 'text-[var(--glass-text-primary)]' : 'text-[var(--glass-text-tertiary)]'}`}>
           {location.name}
         </div>
+      </div>
+      {previewImage && typeof document !== 'undefined' && createPortal(
+        <ImagePreviewModal imageUrl={previewImage} onClose={() => setPreviewImage(null)} />,
+        document.body
+      )}
+    </div>
+  )
+}
+
+type SpotlightPropCardProps = {
+  prop: Prop
+  isActive: boolean
+  onClick: () => void
+  onOpenAssetLibrary?: () => void
+  onRemove?: () => void
+}
+
+export function SpotlightPropCard({
+  prop,
+  isActive,
+  onClick,
+  onOpenAssetLibrary,
+  onRemove,
+}: SpotlightPropCardProps) {
+  const tScript = useTranslations('scriptView')
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
+
+  const imageUrl = prop.images?.[0]?.imageUrl || null
+
+  return (
+    <div
+      onClick={onClick}
+      className={`
+        group relative rounded-xl cursor-pointer transition-all duration-500 ease-out
+        ${isActive
+          ? 'opacity-100 scale-100 ring-2 ring-[var(--glass-focus-ring-strong)] shadow-[var(--glass-shadow-md)] bg-[var(--glass-bg-surface)]'
+          : 'opacity-50 scale-95 grayscale hover:grayscale-0 hover:opacity-100 hover:scale-95 bg-[var(--glass-bg-muted)]'
+        }
+      `}
+    >
+      {isActive && onRemove && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            if (confirm(tScript('confirm.removeProp'))) {
+              onRemove()
+            }
+          }}
+          className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 w-5 h-5 bg-[var(--glass-tone-danger-fg)] rounded-full text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md hover:bg-[var(--glass-tone-danger-fg)] hover:scale-110 z-20"
+          title={tScript('asset.removeFromClip')}
+        >
+          <AppIcon name="closeSm" className="h-3 w-3" />
+        </button>
+      )}
+      <div className="aspect-square relative rounded-t-xl overflow-hidden bg-[var(--glass-bg-muted)]">
+        {imageUrl ? (
+          <MediaImageWithLoading
+            src={imageUrl}
+            alt={prop.name}
+            containerClassName="w-full h-full"
+            className="w-full h-full object-cover cursor-zoom-in"
+            onClick={(e) => { e.stopPropagation(); setPreviewImage(imageUrl) }}
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-[var(--glass-bg-surface-strong)] p-3">
+            <div className="w-10 h-10 rounded-full bg-[var(--glass-bg-muted)] flex items-center justify-center mb-2">
+              <AppIcon name="package" className="w-5 h-5 text-[var(--glass-text-tertiary)]" />
+            </div>
+            {onOpenAssetLibrary && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onOpenAssetLibrary() }}
+                className="text-[11px] text-[var(--glass-text-secondary)] font-medium hover:text-[var(--glass-tone-info-fg)] transition-colors text-center leading-tight"
+              >
+                {tScript('asset.generateProp')}
+              </button>
+            )}
+          </div>
+        )}
+        {isActive && (
+          <div className="absolute top-2 right-2 w-2 h-2 bg-[var(--glass-tone-success-fg)] rounded-full shadow-[0_0_8px_rgba(74,222,128,0.8)] border border-white" />
+        )}
+      </div>
+      <div className="p-2 text-center">
+        <div className={`text-sm font-bold truncate ${isActive ? 'text-[var(--glass-text-primary)]' : 'text-[var(--glass-text-tertiary)]'}`}>
+          {prop.name}
+        </div>
+        {prop.category && (
+          <div className="text-xs text-[var(--glass-text-tertiary)] truncate">{prop.category}</div>
+        )}
       </div>
       {previewImage && typeof document !== 'undefined' && createPortal(
         <ImagePreviewModal imageUrl={previewImage} onClose={() => setPreviewImage(null)} />,

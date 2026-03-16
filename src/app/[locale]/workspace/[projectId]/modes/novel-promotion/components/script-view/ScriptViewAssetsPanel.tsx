@@ -6,7 +6,7 @@ import type { Character, Location, CharacterAppearance } from '@/types/project'
 import type { Prop } from '@/lib/query/hooks/useProps'
 import TaskStatusInline from '@/components/task/TaskStatusInline'
 import { MediaImageWithLoading } from '@/components/media/MediaImageWithLoading'
-import { SpotlightCharCard, SpotlightLocationCard, getSelectedLocationImage } from './SpotlightCards'
+import { SpotlightCharCard, SpotlightLocationCard, SpotlightPropCard, getSelectedLocationImage } from './SpotlightCards'
 import type { TaskPresentationState } from '@/lib/task/presentation'
 import { AppIcon } from '@/components/ui/icons'
 
@@ -158,8 +158,11 @@ export default function ScriptViewAssetsPanel({
   const [initialLocationLabels, setInitialLocationLabels] = useState<Record<string, string>>({})
   const [isSavingCharacterSelection, setIsSavingCharacterSelection] = useState(false)
   const [isSavingLocationSelection, setIsSavingLocationSelection] = useState(false)
+  const [isSavingPropSelection, setIsSavingPropSelection] = useState(false)
+  const [pendingPropIds, setPendingPropIds] = useState<Set<string>>(new Set())
   const hasInitializedCharDraftRef = useRef(false)
   const hasInitializedLocDraftRef = useRef(false)
+  const hasInitializedPropDraftRef = useRef(false)
   const charEditorTriggerRef = useRef<HTMLButtonElement | null>(null)
   const charEditorPopoverRef = useRef<HTMLDivElement | null>(null)
   const locEditorTriggerRef = useRef<HTMLButtonElement | null>(null)
@@ -240,6 +243,17 @@ export default function ScriptViewAssetsPanel({
     setInitialLocationLabels(nextLabels)
     hasInitializedLocDraftRef.current = true
   }, [activeLocationIds, assetViewMode, clips, locations, showAddLoc])
+
+  useEffect(() => {
+    if (!showAddProp) {
+      hasInitializedPropDraftRef.current = false
+      return
+    }
+    if (hasInitializedPropDraftRef.current) return
+    const nextIds = new Set(activePropIds || [])
+    setPendingPropIds(nextIds)
+    hasInitializedPropDraftRef.current = true
+  }, [activePropIds, showAddProp])
 
   useEffect(() => {
     if (!showAddChar && !showAddLoc && !showAddProp) return
@@ -385,6 +399,29 @@ export default function ScriptViewAssetsPanel({
       setShowAddLoc(false)
     } finally {
       setIsSavingLocationSelection(false)
+    }
+  }
+
+  const handleConfirmPropSelection = async () => {
+    if (isSavingPropSelection) return
+    setIsSavingPropSelection(true)
+    try {
+      const currentIds = new Set(activePropIds || [])
+
+      for (const propId of currentIds) {
+        if (pendingPropIds.has(propId)) continue
+        await onUpdateClipAssets('prop', 'remove', propId)
+      }
+
+      for (const propId of pendingPropIds) {
+        if (!currentIds.has(propId)) {
+          await onUpdateClipAssets('prop', 'add', propId)
+        }
+      }
+
+      setShowAddProp(false)
+    } finally {
+      setIsSavingPropSelection(false)
     }
   }
 
@@ -709,79 +746,99 @@ export default function ScriptViewAssetsPanel({
             </div>
           )}
         </div>
-      </div>
 
-      {/* 道具区块 */}
-      {props.length > 0 && (
-        <div className="relative">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="text-sm font-bold text-[var(--glass-text-secondary)]">{tScript('asset.props')} ({activePropIds.length})</h3>
-            <button
-              ref={propEditorTriggerRef}
-              onClick={() => {
-                setShowAddProp((prev) => !prev)
-                setShowAddChar(false)
-                setShowAddLoc(false)
-              }}
-              className="inline-flex h-8 w-8 items-center justify-center text-[var(--glass-text-secondary)] hover:text-[var(--glass-tone-info-fg)] transition-colors"
-            >
-              <AppIcon name="edit" className="h-4 w-4" />
-            </button>
-          </div>
-
-          {showAddProp && mounted && createPortal(
-            <div ref={propEditorPopoverRef} className="fixed right-4 bottom-4 z-[80] glass-surface-modal w-[min(24rem,calc(100vw-2rem))] h-[min(560px,calc(100vh-2rem))] p-3 animate-fadeIn flex flex-col shadow-2xl">
-              <div className="shrink-0 text-xs text-[var(--glass-text-tertiary)]">{tCommon('edit')} · {tScript('asset.props')}</div>
-              <div className="mt-3 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar">
-                <div className="grid grid-cols-2 gap-2">
-                  {props.map((prop) => {
-                    const isSelected = activePropIds.includes(prop.id)
-                    return (
-                      <button
-                        key={prop.id}
-                        onClick={() => void onUpdateClipAssets('prop', isSelected ? 'remove' : 'add', prop.id)}
-                        className={`relative w-full overflow-hidden rounded-lg border-2 text-left px-3 py-2 transition-colors ${isSelected ? 'border-[var(--glass-stroke-success)] bg-[var(--glass-bg-muted)]' : 'border-transparent hover:border-[var(--glass-stroke-focus)]'}`}
-                      >
-                        <div className="text-xs font-medium text-[var(--glass-text-secondary)] truncate">{prop.name}</div>
-                        {prop.category && <div className="text-[10px] text-[var(--glass-text-tertiary)] truncate">{prop.category}</div>}
-                        {isSelected && (
-                          <span className="absolute right-1.5 top-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--glass-tone-success-fg)] text-white shadow-md">
-                            <AppIcon name="checkMicro" className="h-3 w-3" />
-                          </span>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-              <div className="mt-3 flex shrink-0 items-center justify-end border-t border-[var(--glass-stroke-base)] pt-3">
-                <button
-                  onClick={() => setShowAddProp(false)}
-                  className="glass-btn-base glass-btn-secondary rounded-lg px-3 py-1.5 text-xs text-[var(--glass-text-secondary)]"
-                >
-                  {tCommon('close')}
-                </button>
-              </div>
-            </div>,
-            document.body,
-          )}
-
-          {activePropIds.length === 0 ? (
-            <div className="text-center text-[var(--glass-text-tertiary)] text-sm py-4">{tScript('screenplay.noProps')}</div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {props.filter((p) => activePropIds.includes(p.id)).map((prop) => (
-                <span
-                  key={prop.id}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-[var(--glass-bg-muted)] text-[var(--glass-text-secondary)]"
-                >
-                  {prop.name}
-                </span>
-              ))}
+        {/* 道具区块 */}
+        {props.length > 0 && (
+          <div className="relative">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-sm font-bold text-[var(--glass-text-secondary)]">{tScript('asset.props')} ({activePropIds.length})</h3>
+              <button
+                ref={propEditorTriggerRef}
+                onClick={() => {
+                  setShowAddProp((prev) => !prev)
+                  setShowAddChar(false)
+                  setShowAddLoc(false)
+                }}
+                className="inline-flex h-8 w-8 items-center justify-center text-[var(--glass-text-secondary)] hover:text-[var(--glass-tone-info-fg)] transition-colors"
+              >
+                <AppIcon name="edit" className="h-4 w-4" />
+              </button>
             </div>
-          )}
-        </div>
-      )}
+
+            {showAddProp && mounted && createPortal(
+              <div ref={propEditorPopoverRef} className="fixed right-4 bottom-4 z-[80] glass-surface-modal w-[min(24rem,calc(100vw-2rem))] h-[min(560px,calc(100vh-2rem))] p-3 animate-fadeIn flex flex-col shadow-2xl">
+                <div className="shrink-0 text-xs text-[var(--glass-text-tertiary)]">{tCommon('edit')} · {tScript('asset.props')}</div>
+                <div className="mt-3 flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar">
+                  <div className="grid grid-cols-2 gap-2">
+                    {props.map((prop) => {
+                      const isSelected = pendingPropIds.has(prop.id)
+                      return (
+                        <button
+                          key={prop.id}
+                          onClick={() => {
+                            setPendingPropIds((prev) => {
+                              const next = new Set(prev)
+                              if (isSelected) {
+                                next.delete(prop.id)
+                              } else {
+                                next.add(prop.id)
+                              }
+                              return next
+                            })
+                          }}
+                          className={`relative w-full overflow-hidden rounded-lg border-2 text-left px-3 py-2 transition-colors ${isSelected ? 'border-[var(--glass-stroke-success)] bg-[var(--glass-bg-muted)]' : 'border-transparent hover:border-[var(--glass-stroke-focus)]'}`}
+                        >
+                          <div className="text-xs font-medium text-[var(--glass-text-secondary)] truncate">{prop.name}</div>
+                          {prop.category && <div className="text-[10px] text-[var(--glass-text-tertiary)] truncate">{prop.category}</div>}
+                          {isSelected && (
+                            <span className="absolute right-1.5 top-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--glass-tone-success-fg)] text-white shadow-md">
+                              <AppIcon name="checkMicro" className="h-3 w-3" />
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+                <div className="mt-3 flex shrink-0 items-center justify-end gap-2 border-t border-[var(--glass-stroke-base)] pt-3">
+                  <button
+                    onClick={() => setShowAddProp(false)}
+                    disabled={isSavingPropSelection}
+                    className="glass-btn-base glass-btn-secondary rounded-lg px-3 py-1.5 text-xs text-[var(--glass-text-secondary)]"
+                  >
+                    {tCommon('cancel')}
+                  </button>
+                  <button
+                    onClick={() => void handleConfirmPropSelection()}
+                    disabled={isSavingPropSelection || setsEqual(pendingPropIds, new Set(activePropIds || []))}
+                    className="glass-btn-base glass-btn-primary rounded-lg px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {tCommon('confirm')}
+                  </button>
+                </div>
+              </div>,
+              document.body,
+            )}
+
+            {activePropIds.length === 0 ? (
+              <div className="text-center text-[var(--glass-text-tertiary)] text-sm py-4">{tScript('screenplay.noProps')}</div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {props.filter((p) => activePropIds.includes(p.id)).map((prop) => (
+                  <SpotlightPropCard
+                    key={prop.id}
+                    prop={prop}
+                    isActive={true}
+                    onClick={() => { }}
+                    onOpenAssetLibrary={onOpenAssetLibrary}
+                    onRemove={() => void onUpdateClipAssets('prop', 'remove', prop.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="mt-4 mb-4">
         {!allAssetsHaveImages && globalCharIds.length + globalLocationIds.length > 0 && (
