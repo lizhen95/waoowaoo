@@ -357,11 +357,21 @@ export default function AssetsStage({
       />
 
       {/* 道具资产区块 */}
-      <PropGrid
-        projectId={projectId}
-        props={props}
-        mode="project"
-      />
+      {props.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-[var(--glass-text-primary)]">{t('stage.propAssets')}</h3>
+            <span className="glass-chip glass-chip-warning px-2 py-0.5 text-xs">
+              {t('stage.propCounts', { count: props.length })}
+            </span>
+          </div>
+          <PropGrid
+            projectId={projectId}
+            props={props}
+            mode="project"
+          />
+        </div>
+      )}
 
       <AssetsStageModals
         projectId={projectId}
