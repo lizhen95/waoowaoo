@@ -28,7 +28,6 @@ import {
 } from '@/lib/query/hooks'
 import {
     useGlobalProps,
-    useDeleteGlobalProp,
     type Prop,
 } from '@/lib/query/hooks/useProps'
 import { queryKeys } from '@/lib/query/keys'
@@ -58,7 +57,6 @@ export default function AssetHubPage() {
     // Mutation hooks
     const modifyCharacterImage = useModifyCharacterImage()
     const modifyLocationImage = useModifyLocationImage()
-    const deleteGlobalProp = useDeleteGlobalProp()
 
     // 弹窗状态
     const [showAddCharacter, setShowAddCharacter] = useState(false)
@@ -474,10 +472,6 @@ export default function AssetHubPage() {
                         onLocationEdit={handleOpenLocationEdit}
                         onVoiceSelect={(characterId) => setVoicePickerCharacterId(characterId)}
                         onPropEdit={(prop) => setEditingProp(prop)}
-                        onPropDelete={async (propId) => {
-                            if (!confirm(t('confirmDeleteProp'))) return
-                            deleteGlobalProp.mutate(propId)
-                        }}
                     />
                 </div>
             </div>

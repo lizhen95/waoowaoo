@@ -9,7 +9,8 @@ import { getUserModelConfig, buildImageBillingPayloadFromUserConfig } from '@/li
 import { prisma } from '@/lib/prisma'
 import {
   hasGlobalCharacterOutput,
-  hasGlobalLocationOutput
+  hasGlobalLocationOutput,
+  hasGlobalPropOutput
 } from '@/lib/task/has-output'
 import { withTaskUiPayload } from '@/lib/task/ui-payload'
 import { PRIMARY_APPEARANCE_INDEX, isArtStyleValue } from '@/lib/constants'
@@ -103,7 +104,7 @@ export const POST = apiHandler(async (request: NextRequest) => {
   if (!type || !id) {
     throw new ApiError('INVALID_PARAMS')
   }
-  if (type !== 'character' && type !== 'location') {
+  if (type !== 'character' && type !== 'location' && type !== 'prop') {
     throw new ApiError('INVALID_PARAMS')
   }
   const appearanceIndex = toNumber(body.appearanceIndex)
@@ -112,12 +113,21 @@ export const POST = apiHandler(async (request: NextRequest) => {
     ? normalizeImageGenerationCount('character', body.count)
     : normalizeImageGenerationCount('location', body.count)
   const requestedArtStyle = resolveRequestedArtStyle(body)
-  const artStyle = requestedArtStyle || await resolveStoredArtStyle({
-    userId: session.user.id,
-    type,
-    id,
-    appearanceIndex: resolvedAppearanceIndex,
-  })
+  const artStyle = type === 'prop'
+    ? (requestedArtStyle || null)
+    : (requestedArtStyle || await resolveStoredArtStyle({
+        userId: session.user.id,
+        type: type as 'character' | 'location',
+        id,
+        appearanceIndex: resolvedAppearanceIndex,
+      }))
+  if (type === 'prop') {
+    const prop = await prisma.globalProp.findFirst({
+      where: { id, userId: session.user.id },
+      select: { name: true, description: true },
+    })
+    if (!prop) throw new ApiError('NOT_FOUND')
+  }
   if (type === 'location' && toNumber(body.imageIndex) === null) {
     const location = await prisma.globalLocation.findFirst({
       where: { id, userId: session.user.id },
@@ -136,15 +146,12 @@ export const POST = apiHandler(async (request: NextRequest) => {
     ? { ...body, id, type, appearanceIndex: resolvedAppearanceIndex, artStyle, count }
     : { ...body, id, type, artStyle, count }
 
-  const targetType = type === 'character' ? 'GlobalCharacter' : 'GlobalLocation'
+  const targetType = type === 'character' ? 'GlobalCharacter' : type === 'prop' ? 'GlobalProp' : 'GlobalLocation'
   const hasOutputAtStart = type === 'character'
-    ? await hasGlobalCharacterOutput({
-      characterId: id,
-      appearanceIndex: resolvedAppearanceIndex
-    })
-    : await hasGlobalLocationOutput({
-      locationId: id
-    })
+    ? await hasGlobalCharacterOutput({ characterId: id, appearanceIndex: resolvedAppearanceIndex })
+    : type === 'prop'
+      ? await hasGlobalPropOutput({ propId: id })
+      : await hasGlobalLocationOutput({ locationId: id })
   const userModelConfig = await getUserModelConfig(session.user.id)
   const imageModel = type === 'character'
     ? userModelConfig.characterModel

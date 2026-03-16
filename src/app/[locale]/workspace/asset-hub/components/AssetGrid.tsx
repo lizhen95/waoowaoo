@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { CharacterCard } from './CharacterCard'
 import { LocationCard } from './LocationCard'
 import { VoiceCard } from './VoiceCard'
-import { PropCard, PropCreationModal, PropEditModal } from '@/components/shared/assets'
+import { PropCard } from '@/components/shared/assets'
 import TaskStatusInline from '@/components/task/TaskStatusInline'
 import { resolveTaskPresentationState } from '@/lib/task/presentation'
 import { AppIcon } from '@/components/ui/icons'
@@ -70,8 +70,14 @@ interface Prop {
     folderId?: string | null
     images?: Array<{
         id: string
-        imageUrl?: string | null
-        isSelected?: boolean
+        imageIndex: number
+        description: string | null
+        imageUrl: string | null
+        previousImageUrl: string | null
+        isSelected: boolean
+        imageTaskRunning: boolean
+        imageErrorMessage?: string | null
+        lastError?: { code: string; message: string } | null
     }>
 }
 
@@ -95,7 +101,6 @@ interface AssetGridProps {
     onLocationEdit?: (location: unknown, imageIndex: number) => void
     onVoiceSelect?: (characterId: string) => void
     onPropEdit?: (prop: Prop) => void
-    onPropDelete?: (propId: string) => void
 }
 
 // 内联 SVG 图标
@@ -123,7 +128,6 @@ export function AssetGrid({
     onLocationEdit,
     onVoiceSelect,
     onPropEdit,
-    onPropDelete,
 }: AssetGridProps) {
     const t = useTranslations('assetHub')
     const loadingState = loading
@@ -360,9 +364,8 @@ export function AssetGrid({
                                         name={prop.name}
                                         category={prop.category}
                                         description={prop.description ?? undefined}
-                                        imageUrl={prop.images?.find(i => i.isSelected)?.imageUrl ?? prop.images?.[0]?.imageUrl ?? undefined}
+                                        images={(prop.images ?? []) as import('@/lib/query/hooks/useProps').PropImage[]}
                                         onEdit={onPropEdit ? () => onPropEdit(prop) : undefined}
-                                        onDelete={onPropDelete ? () => onPropDelete(prop.id) : undefined}
                                     />
                                 ))}
                             </div>

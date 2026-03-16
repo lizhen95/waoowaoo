@@ -2,16 +2,24 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api-fetch'
 import { queryKeys } from '@/lib/query/keys'
 
+export interface PropImage {
+  id: string
+  imageIndex: number
+  description: string | null
+  imageUrl: string | null
+  previousImageUrl: string | null
+  isSelected: boolean
+  imageTaskRunning: boolean
+  imageErrorMessage?: string | null
+  lastError?: { code: string; message: string } | null
+}
+
 export interface Prop {
   id: string
   name: string
   category: string
   description?: string | null
-  images?: Array<{
-    id: string
-    imageUrl?: string | null
-    isSelected?: boolean
-  }>
+  images?: PropImage[]
 }
 
 // 全局道具 hooks

@@ -259,3 +259,13 @@ export async function hasGlobalLocationImageOutput(params: {
   if (!image) return false
   return isNonEmptyString(image.imageUrl) || !!image.imageMediaId
 }
+
+export async function hasGlobalPropOutput(params: { propId?: string | null }) {
+  if (!isNonEmptyString(params.propId)) return false
+  const image = await prisma.globalPropImage.findFirst({
+    where: { propId: params.propId },
+    select: { imageUrl: true, imageMediaId: true },
+  })
+  if (!image) return false
+  return isNonEmptyString(image.imageUrl) || !!image.imageMediaId
+}

@@ -15,3 +15,7 @@ export function invalidateGlobalLocations(queryClient: QueryClient) {
 export function invalidateGlobalVoices(queryClient: QueryClient) {
   return invalidateQueryTemplates(queryClient, [queryKeys.globalAssets.voices()])
 }
+
+export function invalidateGlobalProps(queryClient: QueryClient) {
+  return invalidateQueryTemplates(queryClient, [queryKeys.globalAssets.props()])
+}
