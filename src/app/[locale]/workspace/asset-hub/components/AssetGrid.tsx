@@ -350,25 +350,31 @@ export function AssetGrid({
                     )}
 
                     {/* 道具区块 */}
-                    {(filter === 'all' || filter === 'prop') && props.length > 0 && (
+                    {(filter === 'all' || filter === 'prop') && (props.length > 0 || filter === 'prop') && (
                         <section>
                             <h2 className="text-sm font-semibold text-[var(--glass-text-primary)] mb-3 flex items-center gap-2">
                                 {t('props')}
                                 <span className="glass-chip glass-chip-warning px-2 py-0.5">{props.length}</span>
                             </h2>
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                                {propsPage.items.map((prop) => (
-                                    <PropCard
-                                        key={prop.id}
-                                        propId={prop.id}
-                                        name={prop.name}
-                                        category={prop.category}
-                                        description={prop.description ?? undefined}
-                                        images={(prop.images ?? []) as import('@/lib/query/hooks/useProps').PropImage[]}
-                                        onEdit={onPropEdit ? () => onPropEdit(prop) : undefined}
-                                    />
-                                ))}
-                            </div>
+                            {props.length === 0 ? (
+                                <div className="glass-surface rounded-xl p-8 text-center text-[var(--glass-text-tertiary)] text-sm">
+                                    {t('emptyState')}
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                                    {propsPage.items.map((prop) => (
+                                        <PropCard
+                                            key={prop.id}
+                                            propId={prop.id}
+                                            name={prop.name}
+                                            category={prop.category}
+                                            description={prop.description ?? undefined}
+                                            images={(prop.images ?? []) as import('@/lib/query/hooks/useProps').PropImage[]}
+                                            onEdit={onPropEdit ? () => onPropEdit(prop) : undefined}
+                                        />
+                                    ))}
+                                </div>
+                            )}
                             {renderPagination('prop', propsPage.page, propsPage.totalPages)}
                         </section>
                     )}
