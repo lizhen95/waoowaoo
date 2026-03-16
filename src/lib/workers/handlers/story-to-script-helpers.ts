@@ -135,6 +135,41 @@ export async function persistAnalyzedLocations(params: {
   return created
 }
 
+export async function persistAnalyzedProps(params: {
+  projectInternalId: string
+  existingNames: Set<string>
+  analyzedProps: Record<string, unknown>[]
+}) {
+  const created: Array<{ id: string; name: string }> = []
+
+  for (const item of params.analyzedProps) {
+    const name = asString(item.name).trim()
+    if (!name) continue
+
+    const key = name.toLowerCase()
+    if (params.existingNames.has(key)) continue
+
+    const category = asString(item.category).trim() || 'other'
+    const validCategories = ['weapon', 'clothing', 'furniture', 'food', 'vehicle', 'tool', 'decoration', 'electronic', 'nature', 'other']
+    const safeCategory = validCategories.includes(category) ? category : 'other'
+
+    const prop = await prisma.novelPromotionProp.create({
+      data: {
+        novelPromotionProjectId: params.projectInternalId,
+        name,
+        category: safeCategory,
+        description: asString(item.description) || null,
+      },
+      select: { id: true, name: true },
+    })
+
+    params.existingNames.add(key)
+    created.push(prop)
+  }
+
+  return created
+}
+
 export async function persistClips(params: {
   episodeId: string
   clipList: StoryToScriptClipCandidate[]

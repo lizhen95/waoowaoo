@@ -51,6 +51,7 @@ const graphExecutorMock = vi.hoisted(() => ({
 const helperMock = vi.hoisted(() => ({
   persistAnalyzedCharacters: vi.fn(async () => [{ id: 'character-new-1' }]),
   persistAnalyzedLocations: vi.fn(async () => [{ id: 'location-new-1' }]),
+  persistAnalyzedProps: vi.fn(async () => [{ id: 'prop-new-1' }]),
   persistClips: vi.fn(async () => [{ clipKey: 'clip-1', id: 'clip-row-1' }]),
 }))
 
@@ -97,6 +98,7 @@ vi.mock('@/lib/workers/handlers/story-to-script-helpers', () => ({
   parseTemperature: vi.fn(() => 0.7),
   persistAnalyzedCharacters: helperMock.persistAnalyzedCharacters,
   persistAnalyzedLocations: helperMock.persistAnalyzedLocations,
+  persistAnalyzedProps: helperMock.persistAnalyzedProps,
   persistClips: helperMock.persistClips,
   resolveClipRecordId: (clipIdMap: Map<string, string>, clipId: string) => clipIdMap.get(clipId) ?? null,
 }))
@@ -189,6 +191,7 @@ describe('worker story-to-script behavior', () => {
       screenplayFailedCount: 0,
       persistedCharacters: 1,
       persistedLocations: 1,
+      persistedProps: 1,
       persistedClips: 1,
     })
 

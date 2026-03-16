@@ -25,6 +25,7 @@ import {
   parseTemperature,
   persistAnalyzedCharacters,
   persistAnalyzedLocations,
+  persistAnalyzedProps,
   persistClips,
   resolveClipRecordId,
 } from './story-to-script-helpers'
@@ -487,6 +488,9 @@ export async function handleStoryToScriptTask(job: Job<TaskJobData>) {
   const existingLocationNames = new Set<string>(
     (novelData.locations || []).map((item) => String(item.name || '').toLowerCase()),
   )
+  const existingPropNames = new Set<string>(
+    (novelData.props || []).map((item) => String(item.name || '').toLowerCase()),
+  )
 
   const createdCharacters = await persistAnalyzedCharacters({
     projectInternalId: novelData.id,
@@ -498,6 +502,12 @@ export async function handleStoryToScriptTask(job: Job<TaskJobData>) {
     projectInternalId: novelData.id,
     existingNames: existingLocationNames,
     analyzedLocations: result.analyzedLocations,
+  })
+
+  const createdProps = await persistAnalyzedProps({
+    projectInternalId: novelData.id,
+    existingNames: existingPropNames,
+    analyzedProps: result.analyzedProps ?? [],
   })
 
   const createdClipRows = await persistClips({
@@ -531,6 +541,7 @@ export async function handleStoryToScriptTask(job: Job<TaskJobData>) {
     screenplayFailedCount: result.summary.screenplayFailedCount,
     persistedCharacters: createdCharacters.length,
     persistedLocations: createdLocations.length,
+    persistedProps: createdProps.length,
     persistedClips: createdClipRows.length,
   }
 }
