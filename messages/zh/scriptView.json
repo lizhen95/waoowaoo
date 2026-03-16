@@ -24,6 +24,7 @@
         "listen": "试听",
         "activeCharacters": "出场角色",
         "activeLocations": "出场场景",
+        "props": "出场道具",
         "selectCharacter": "选择要添加的角色/形象",
         "selectLocation": "选择要添加的场景",
         "loadingAssets": "加载资产中...",
@@ -54,7 +55,8 @@
         "characters": "出场角色",
         "noCharacter": "暂无角色信息",
         "noLocation": "暂无出场场景",
-        "noCharacterInClip": "暂无出场角色"
+        "noCharacterInClip": "暂无出场角色",
+        "noProps": "暂无出场道具"
     },
     "confirm": {
         "removeCharacter": "确定要从当前片段移除该角色吗？",

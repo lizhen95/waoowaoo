@@ -7,6 +7,9 @@ Character library names:
 Location library names:
 {locations_lib_name}
 
+Props library names:
+{props_lib_name}
+
 Character introduction mapping:
 {characters_introduction}
 
@@ -48,6 +51,7 @@ Planning rules:
 2. Avoid missing key beats from clip_content.
 3. Keep panel transitions smooth and logically continuous.
 4. Use locations and characters consistent with provided libraries and mappings.
-5. Prefer concrete, visible actions over abstract wording.
-6. Return strict JSON only.
-7. ⚠️ JSON SAFETY: All quotation marks in text (""''「」 etc.) MUST be converted to corner brackets「」in JSON string values. NEVER use raw ASCII double quotes " inside string values.
+5. When props from the props library appear in a panel, reference them by their exact library name in the description.
+6. Prefer concrete, visible actions over abstract wording.
+7. Return strict JSON only.
+8. ⚠️ JSON SAFETY: All quotation marks in text (""''「」 etc.) MUST be converted to corner brackets「」in JSON string values. NEVER use raw ASCII double quotes " inside string values.

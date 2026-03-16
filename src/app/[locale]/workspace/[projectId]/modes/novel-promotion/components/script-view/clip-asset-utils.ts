@@ -1,12 +1,14 @@
 type ClipAssetSource = {
   characters?: string | null
   location?: string | null
+  props?: string | null
 }
 
 export type ParsedClipAssets = {
   charNames: Set<string>
   locNames: Set<string>
   charAppearanceSet: Set<string>
+  propNames: Set<string>
 }
 
 export function fuzzyMatchLocation(clipLocName: string, libraryLocName: string): boolean {
@@ -30,6 +32,7 @@ export function parseClipAssets(clip: ClipAssetSource): ParsedClipAssets {
   const charNames = new Set<string>()
   const locNames = new Set<string>()
   const charAppearanceSet = new Set<string>()
+  const propNames = new Set<string>()
 
   if (clip.characters) {
     try {
@@ -80,20 +83,42 @@ export function parseClipAssets(clip: ClipAssetSource): ParsedClipAssets {
     }
   }
 
-  return { charNames, locNames, charAppearanceSet }
+  if (clip.props) {
+    try {
+      const parsed = JSON.parse(clip.props)
+      if (Array.isArray(parsed)) {
+        parsed.forEach((item) => {
+          const name = typeof item === 'string' ? item : (item as { name?: unknown })?.name
+          if (name) {
+            const trimmed = String(name).trim()
+            if (trimmed) propNames.add(trimmed)
+          }
+        })
+      }
+    } catch {
+      clip.props.split(',').forEach(p => {
+        const trimmed = p.trim()
+        if (trimmed) propNames.add(trimmed)
+      })
+    }
+  }
+
+  return { charNames, locNames, charAppearanceSet, propNames }
 }
 
 export function getAllClipsAssets(clips: ClipAssetSource[]) {
   const allCharNames = new Set<string>()
   const allLocNames = new Set<string>()
   const allCharAppearanceSet = new Set<string>()
+  const allPropNames = new Set<string>()
 
   clips.forEach((clip) => {
-    const { charNames, locNames, charAppearanceSet } = parseClipAssets(clip)
+    const { charNames, locNames, charAppearanceSet, propNames } = parseClipAssets(clip)
     charNames.forEach(n => allCharNames.add(n))
     locNames.forEach(n => allLocNames.add(n))
     charAppearanceSet.forEach(k => allCharAppearanceSet.add(k))
+    propNames.forEach(n => allPropNames.add(n))
   })
 
-  return { allCharNames, allLocNames, allCharAppearanceSet }
+  return { allCharNames, allLocNames, allCharAppearanceSet, allPropNames }
 }

@@ -61,6 +61,13 @@ export const GET = apiHandler(async (
           images: true
         },
         orderBy: { createdAt: 'asc' }
+      },
+      // 道具数据
+      props: {
+        include: {
+          images: true
+        },
+        orderBy: { createdAt: 'asc' }
       }
     }
   })

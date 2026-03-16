@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { CharacterCard } from './CharacterCard'
 import { LocationCard } from './LocationCard'
 import { VoiceCard } from './VoiceCard'
+import { PropCard, PropCreationModal, PropEditModal } from '@/components/shared/assets'
 import TaskStatusInline from '@/components/task/TaskStatusInline'
 import { resolveTaskPresentationState } from '@/lib/task/presentation'
 import { AppIcon } from '@/components/ui/icons'
@@ -61,14 +62,29 @@ interface Voice {
     folderId: string | null
 }
 
+interface Prop {
+    id: string
+    name: string
+    category: string
+    description?: string | null
+    folderId?: string | null
+    images?: Array<{
+        id: string
+        imageUrl?: string | null
+        isSelected?: boolean
+    }>
+}
+
 interface AssetGridProps {
     characters: Character[]
     locations: Location[]
     voices: Voice[]
+    props?: Prop[]
     loading: boolean
     onAddCharacter: () => void
     onAddLocation: () => void
     onAddVoice: () => void
+    onAddProp?: () => void
     onDownloadAll?: () => void
     isDownloading?: boolean
     selectedFolderId: string | null
@@ -78,6 +94,8 @@ interface AssetGridProps {
     onCharacterEdit?: (character: unknown, appearance: unknown) => void
     onLocationEdit?: (location: unknown, imageIndex: number) => void
     onVoiceSelect?: (characterId: string) => void
+    onPropEdit?: (prop: Prop) => void
+    onPropDelete?: (propId: string) => void
 }
 
 // 内联 SVG 图标
@@ -89,10 +107,12 @@ export function AssetGrid({
     characters,
     locations,
     voices,
+    props = [],
     loading,
     onAddCharacter,
     onAddLocation,
     onAddVoice,
+    onAddProp,
     onDownloadAll,
     isDownloading,
     selectedFolderId: _selectedFolderId,
@@ -101,7 +121,9 @@ export function AssetGrid({
     onVoiceDesign,
     onCharacterEdit,
     onLocationEdit,
-    onVoiceSelect
+    onVoiceSelect,
+    onPropEdit,
+    onPropDelete,
 }: AssetGridProps) {
     const t = useTranslations('assetHub')
     const loadingState = loading
@@ -114,11 +136,12 @@ export function AssetGrid({
         : null
     void _selectedFolderId
 
-    const [filter, setFilter] = useState<'all' | 'character' | 'location' | 'voice'>('all')
-    const [sectionPage, setSectionPage] = useState<{ character: number; location: number; voice: number }>({
+    const [filter, setFilter] = useState<'all' | 'character' | 'location' | 'voice' | 'prop'>('all')
+    const [sectionPage, setSectionPage] = useState<{ character: number; location: number; voice: number; prop: number }>({
         character: 1,
         location: 1,
         voice: 1,
+        prop: 1,
     })
 
     const pageSize = 40
@@ -133,15 +156,16 @@ export function AssetGrid({
         }
     }
 
-    const setPage = (type: 'character' | 'location' | 'voice', page: number) => {
+    const setPage = (type: 'character' | 'location' | 'voice' | 'prop', page: number) => {
         setSectionPage((prev) => ({ ...prev, [type]: page }))
     }
 
     const charactersPage = paginate(characters, sectionPage.character)
     const locationsPage = paginate(locations, sectionPage.location)
     const voicesPage = paginate(voices, sectionPage.voice)
+    const propsPage = paginate(props, sectionPage.prop)
 
-    const renderPagination = (type: 'character' | 'location' | 'voice', page: number, totalPages: number) => {
+    const renderPagination = (type: 'character' | 'location' | 'voice' | 'prop', page: number, totalPages: number) => {
         if (totalPages <= 1) return null
         return (
             <div className="mt-4 flex items-center justify-end gap-2">
@@ -174,13 +198,14 @@ export function AssetGrid({
         )
     }
 
-    const isEmpty = characters.length === 0 && locations.length === 0 && voices.length === 0
+    const isEmpty = characters.length === 0 && locations.length === 0 && voices.length === 0 && props.length === 0
 
     const tabs = [
         { id: 'all', label: t('allAssets') },
         { id: 'character', label: t('characters') },
         { id: 'location', label: t('locations') },
         { id: 'voice', label: t('voices') },
+        { id: 'prop', label: t('props') },
     ]
 
     return (
@@ -232,6 +257,15 @@ export function AssetGrid({
                         <PlusIcon className="w-4 h-4" />
                         <span>{t('addVoice')}</span>
                     </button>
+                    {onAddProp && (
+                        <button
+                            onClick={onAddProp}
+                            className="glass-btn-base glass-btn-tone-warning px-4 py-2 rounded-lg text-sm"
+                        >
+                            <PlusIcon className="w-4 h-4" />
+                            <span>{t('addProp')}</span>
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -308,6 +342,31 @@ export function AssetGrid({
                                 ))}
                             </div>
                             {renderPagination('voice', voicesPage.page, voicesPage.totalPages)}
+                        </section>
+                    )}
+
+                    {/* 道具区块 */}
+                    {(filter === 'all' || filter === 'prop') && props.length > 0 && (
+                        <section>
+                            <h2 className="text-sm font-semibold text-[var(--glass-text-primary)] mb-3 flex items-center gap-2">
+                                {t('props')}
+                                <span className="glass-chip glass-chip-warning px-2 py-0.5">{props.length}</span>
+                            </h2>
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                                {propsPage.items.map((prop) => (
+                                    <PropCard
+                                        key={prop.id}
+                                        propId={prop.id}
+                                        name={prop.name}
+                                        category={prop.category}
+                                        description={prop.description ?? undefined}
+                                        imageUrl={prop.images?.find(i => i.isSelected)?.imageUrl ?? prop.images?.[0]?.imageUrl ?? undefined}
+                                        onEdit={onPropEdit ? () => onPropEdit(prop) : undefined}
+                                        onDelete={onPropDelete ? () => onPropDelete(prop.id) : undefined}
+                                    />
+                                ))}
+                            </div>
+                            {renderPagination('prop', propsPage.page, propsPage.totalPages)}
                         </section>
                     )}
                 </div>

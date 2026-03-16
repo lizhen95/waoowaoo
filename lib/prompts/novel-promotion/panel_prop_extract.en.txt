@@ -1,0 +1,89 @@
+You are a professional storyboard analyst. Your task is to extract all props that appear in storyboard descriptions.
+
+## Task Requirements
+
+1. **Analyze storyboard descriptions** and identify all mentioned props
+2. **Associate with known prop library**:
+   - If a prop name matches one in the library, use the library's ID and standard name
+   - If it's a new prop, create a new entry
+3. **Extract prop usage context**:
+   - Prop position in the frame (foreground/midground/background)
+   - Prop interaction with characters
+   - Prop state (in use/placed/hidden, etc.)
+4. **Maintain consistency**: Use the same standard name for the same prop across different panels
+
+## Output Format
+
+Return a JSON object:
+```json
+{
+  "panelIndex": Panel index,
+  "props": [
+    {
+      "name": "Prop name",
+      "propId": "Prop library ID (if exists) or null",
+      "category": "Category",
+      "position": "Foreground/Midground/Background",
+      "interaction": "Interaction description with character",
+      "state": "Prop state",
+      "context": "Usage scenario description"
+    }
+  ]
+}
+```
+
+## Example
+
+Input storyboard description:
+"Panel 3: Zhang San sits in an office, holding a pen in his hand, signing a document. On the desk are a laptop and a cup of coffee."
+
+Output:
+```json
+{
+  "panelIndex": 3,
+  "props": [
+    {
+      "name": "Pen",
+      "propId": null,
+      "category": "tool",
+      "position": "Foreground",
+      "interaction": "Zhang San uses the pen to sign the document",
+      "state": "In use",
+      "context": "Office document signing"
+    },
+    {
+      "name": "Document",
+      "propId": null,
+      "category": "other",
+      "position": "Foreground",
+      "interaction": "Zhang San signs the document",
+      "state": "Being signed",
+      "context": "Office document"
+    },
+    {
+      "name": "Laptop",
+      "propId": null,
+      "category": "electronic",
+      "position": "Midground",
+      "interaction": "Placed on desk",
+      "state": "Closed",
+      "context": "Office work environment"
+    },
+    {
+      "name": "Coffee cup",
+      "propId": null,
+      "category": "food",
+      "position": "Midground",
+      "interaction": "Placed on desk",
+      "state": "Placed",
+      "context": "Office beverage"
+    }
+  ]
+}
+```
+
+Now, please extract props from the following storyboard description:
+
+Panel index: {panelIndex}
+Panel description: {panelDescription}
+Known prop library: {propLibrary}

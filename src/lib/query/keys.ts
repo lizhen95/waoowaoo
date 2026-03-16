@@ -12,6 +12,8 @@ export const queryKeys = {
             folderId ? ['global-assets', 'locations', folderId] as const : ['global-assets', 'locations'] as const,
         voices: (folderId?: string | null) =>
             folderId ? ['global-assets', 'voices', folderId] as const : ['global-assets', 'voices'] as const,
+        props: (folderId?: string | null) =>
+            folderId ? ['global-assets', 'props', folderId] as const : ['global-assets', 'props'] as const,
         folders: () => ['global-assets', 'folders'] as const,
     },
 
@@ -20,6 +22,7 @@ export const queryKeys = {
         all: (projectId: string) => ['project-assets', projectId] as const,
         characters: (projectId: string) => ['project-assets', projectId, 'characters'] as const,
         locations: (projectId: string) => ['project-assets', projectId, 'locations'] as const,
+        props: (projectId: string) => ['project-assets', projectId, 'props'] as const,
         detail: (projectId: string) => ['project-assets', projectId, 'detail'] as const,
     },
 

@@ -68,6 +68,7 @@ export type ScriptToStoryboardOrchestratorInput = {
   novelPromotionData: {
     characters: CharacterAsset[]
     locations: LocationAsset[]
+    props?: Array<{ name: string }>
   }
   promptTemplates: ScriptToStoryboardPromptTemplates
   runStep: (
@@ -276,6 +277,7 @@ export async function runScriptToStoryboardOrchestrator(
   const totalStepCount = clips.length * 4 + 2
   const charactersLibName = (novelPromotionData.characters || []).map((c) => c.name).join(', ') || '无'
   const locationsLibName = (novelPromotionData.locations || []).map((l) => l.name).join(', ') || '无'
+  const propsLibName = (novelPromotionData.props || []).map((p) => p.name).join(', ') || '无'
   const charactersIntroduction = buildCharactersIntroduction(novelPromotionData.characters || [])
 
   const phase1PanelsByClipId = new Map<string, StoryboardPanel[]>()
@@ -309,6 +311,7 @@ export async function runScriptToStoryboardOrchestrator(
       let phase1Prompt = promptTemplates.phase1PlanTemplate
         .replace('{characters_lib_name}', charactersLibName)
         .replace('{locations_lib_name}', locationsLibName)
+        .replace('{props_lib_name}', propsLibName)
         .replace('{characters_introduction}', charactersIntroduction)
         .replace('{characters_appearance_list}', filteredAppearanceList)
         .replace('{characters_full_description}', filteredFullDescription)

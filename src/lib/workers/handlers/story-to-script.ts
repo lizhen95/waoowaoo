@@ -85,6 +85,7 @@ export async function handleStoryToScriptTask(job: Job<TaskJobData>) {
     include: {
       characters: true,
       locations: true,
+      props: true,
     },
   })
   if (!novelData) {
@@ -136,6 +137,7 @@ export async function handleStoryToScriptTask(job: Job<TaskJobData>) {
 
   const characterPromptTemplate = getPromptTemplate(PROMPT_IDS.NP_AGENT_CHARACTER_PROFILE, job.data.locale)
   const locationPromptTemplate = getPromptTemplate(PROMPT_IDS.NP_SELECT_LOCATION, job.data.locale)
+  const propPromptTemplate = getPromptTemplate(PROMPT_IDS.NP_PROP_EXTRACT, job.data.locale)
   const clipPromptTemplate = getPromptTemplate(PROMPT_IDS.NP_AGENT_CLIP, job.data.locale)
   const screenplayPromptTemplate = getPromptTemplate(PROMPT_IDS.NP_SCREENPLAY_CONVERSION, job.data.locale)
 
@@ -260,6 +262,7 @@ export async function handleStoryToScriptTask(job: Job<TaskJobData>) {
       .replace('{clip_content}', clipContent)
       .replace('{locations_lib_name}', asString(splitPayload.locationsLibName) || '无')
       .replace('{characters_lib_name}', asString(splitPayload.charactersLibName) || '无')
+      .replace('{props_lib_name}', asString(splitPayload.propsLibName) || '无')
       .replace('{characters_introduction}', asString(splitPayload.charactersIntroduction) || '暂无角色介绍')
       .replace('{clip_id}', retryClipId)
 
@@ -380,6 +383,7 @@ export async function handleStoryToScriptTask(job: Job<TaskJobData>) {
           content,
           baseCharacters: (novelData.characters || []).map((item) => item.name),
           baseLocations: (novelData.locations || []).map((item) => item.name),
+          baseProps: (novelData.props || []).map((item) => item.name),
           baseCharacterIntroductions: (novelData.characters || []).map((item) => ({
             name: item.name,
             introduction: item.introduction || '',
@@ -387,6 +391,7 @@ export async function handleStoryToScriptTask(job: Job<TaskJobData>) {
           promptTemplates: {
             characterPromptTemplate,
             locationPromptTemplate,
+            propPromptTemplate,
             clipPromptTemplate,
             screenplayPromptTemplate,
           },

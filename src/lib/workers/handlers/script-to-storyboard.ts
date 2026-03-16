@@ -85,6 +85,7 @@ export async function handleScriptToStoryboardTask(job: Job<TaskJobData>) {
     include: {
       characters: true,
       locations: true,
+      props: true,
     },
   })
   if (!novelData) {
@@ -257,6 +258,7 @@ export async function handleScriptToStoryboardTask(job: Job<TaskJobData>) {
               novelPromotionData: {
                 characters: novelData.characters || [],
                 locations: novelData.locations || [],
+                props: novelData.props || [],
               },
               promptTemplates: {
                 phase1PlanTemplate,
@@ -295,6 +297,7 @@ export async function handleScriptToStoryboardTask(job: Job<TaskJobData>) {
             novelPromotionData: {
               characters: novelData.characters || [],
               locations: novelData.locations || [],
+              props: novelData.props || [],
             },
             promptTemplates: {
               phase1PlanTemplate,

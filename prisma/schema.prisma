@@ -174,6 +174,7 @@ model NovelPromotionClip {
   shotCount  Int?
   startText  String?                   @db.Text
   screenplay String?                   @db.Text
+  props      String?                   @db.Text // JSON array of prop names
   episode    NovelPromotionEpisode     @relation(fields: [episodeId], references: [id], onDelete: Cascade)
   shots      NovelPromotionShot[]
   storyboard NovelPromotionStoryboard?
@@ -264,6 +265,7 @@ model NovelPromotionProject {
   characters      NovelPromotionCharacter[]
   episodes        NovelPromotionEpisode[]
   locations       NovelPromotionLocation[]
+  props           NovelPromotionProp[]
   project         Project                   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("novel_promotion_projects")
@@ -417,6 +419,7 @@ model User {
   globalCharacters   GlobalCharacter[]
   globalLocations    GlobalLocation[]
   globalVoices       GlobalVoice[]
+  globalProps        GlobalProp[]
   tasks              Task[]
   taskEvents         TaskEvent[]
   graphRuns          GraphRun[]
@@ -799,6 +802,7 @@ model GlobalAssetFolder {
   characters GlobalCharacter[]
   locations  GlobalLocation[]
   voices     GlobalVoice[]
+  props      GlobalProp[]
 
   @@index([userId])
   @@map("global_asset_folders")
@@ -937,6 +941,96 @@ model GlobalVoice {
   @@map("global_voices")
 }
 
+// 全局道具库
+model GlobalProp {
+  id               String   @id @default(uuid())
+  userId           String
+  folderId         String?
+  name             String
+  category         String   @default("other") // 10分类：weapon|clothing|furniture|food|vehicle|tool|decoration|electronic|nature|other
+  description      String?  @db.Text
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user             User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folder           GlobalAssetFolder?    @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  images           GlobalPropImage[]
+
+  @@index([userId])
+  @@index([folderId])
+  @@map("global_props")
+}
+
+// 全局道具图片
+model GlobalPropImage {
+  id                  String   @id @default(uuid())
+  propId              String
+  imageIndex          Int
+  description         String?  @db.Text
+  imageUrl            String?  @db.Text
+  imageMediaId        String?
+  imageMedia          MediaObject? @relation("GlobalPropImageMedia", fields: [imageMediaId], references: [id], onDelete: SetNull)
+  isSelected          Boolean  @default(false)
+  previousImageUrl    String?  @db.Text
+  previousImageMediaId String?
+  previousImageMedia  MediaObject? @relation("GlobalPropImagePreviousImageMedia", fields: [previousImageMediaId], references: [id], onDelete: SetNull)
+  previousDescription String?  @db.Text
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  prop GlobalProp @relation(fields: [propId], references: [id], onDelete: Cascade)
+
+  @@unique([propId, imageIndex])
+  @@index([propId])
+  @@index([imageMediaId])
+  @@index([previousImageMediaId])
+  @@map("global_prop_images")
+}
+
+// 项目道具
+model NovelPromotionProp {
+  id                      String   @id @default(uuid())
+  novelPromotionProjectId String
+  name                    String
+  category                String   @default("other")
+  description             String?  @db.Text
+  sourceGlobalPropId      String? // 来源全局道具ID（复制时记录）
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  novelPromotionProject   NovelPromotionProject @relation(fields: [novelPromotionProjectId], references: [id], onDelete: Cascade)
+  images                  NovelPromotionPropImage[]
+
+  @@index([novelPromotionProjectId])
+  @@map("novel_promotion_props")
+}
+
+// 项目道具图片
+model NovelPromotionPropImage {
+  id                  String   @id @default(uuid())
+  propId              String
+  imageIndex          Int
+  description         String?  @db.Text
+  imageUrl            String?  @db.Text
+  imageMediaId        String?
+  imageMedia          MediaObject? @relation("NovelPromotionPropImageMedia", fields: [imageMediaId], references: [id], onDelete: SetNull)
+  isSelected          Boolean  @default(false)
+  previousImageUrl    String?  @db.Text
+  previousImageMediaId String?
+  previousImageMedia  MediaObject? @relation("NovelPromotionPropImagePreviousImageMedia", fields: [previousImageMediaId], references: [id], onDelete: SetNull)
+  previousDescription String?  @db.Text
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  prop NovelPromotionProp @relation(fields: [propId], references: [id], onDelete: Cascade)
+
+  @@unique([propId, imageIndex])
+  @@index([propId])
+  @@index([imageMediaId])
+  @@index([previousImageMediaId])
+  @@map("novel_promotion_prop_images")
+}
+
 model MediaObject {
   id         String   @id @default(uuid())
   publicId   String   @unique
@@ -969,6 +1063,10 @@ model MediaObject {
   globalLocationImageImages             GlobalLocationImage[]       @relation("GlobalLocationImageMedia")
   globalLocationImagePreviousImages     GlobalLocationImage[]       @relation("GlobalLocationImagePreviousImageMedia")
   globalVoiceCustomVoices               GlobalVoice[]               @relation("GlobalVoiceCustomVoiceMedia")
+  globalPropImages                      GlobalPropImage[]           @relation("GlobalPropImageMedia")
+  globalPropImagePreviousImages         GlobalPropImage[]           @relation("GlobalPropImagePreviousImageMedia")
+  novelPromotionPropImages              NovelPromotionPropImage[]   @relation("NovelPromotionPropImageMedia")
+  novelPromotionPropImagePreviousImages NovelPromotionPropImage[]   @relation("NovelPromotionPropImagePreviousImageMedia")
 
   @@index([createdAt])
   @@map("media_objects")

@@ -1,0 +1,56 @@
+You are a professional prop analyst. Your task is to extract all props that are **actually used in the plot** from the given screenplay.
+
+## Task Requirements
+
+1. **Carefully read the screenplay content** and identify all items, tools, etc. that are **actually used or appear in the plot**
+   - Only extract props that have actual function or are used by characters in the plot
+   - Ignore items that are only mentioned but not used
+   - Ignore environmental elements in background descriptions
+
+2. **Categorize props** into one of the following 4 categories:
+   - weapon: Weapons (knife, gun, bow, etc.) - Only extract weapons actually used in combat or conflict
+   - vehicle: Vehicles (car, ship, airplane, etc.)
+   - tool: Tools (hammer, pliers, wrench, etc.)
+   - electronic: Electronic products (phone, computer, TV, etc.)
+
+3. **Provide concise descriptions** explaining the prop's appearance, material, color, etc.
+4. **Avoid duplicates** - list the same prop only once
+5. **List in order of appearance** in the screenplay
+
+## Output Format
+
+Return only the following JSON format. Prohibit returning any extra content besides JSON. ⚠️ All quotation marks ("''等) in JSON string values must be replaced with 「」, strictly prohibit unescaped English double quotes ".
+
+{
+  "props": [
+    {
+      "name": "Prop name",
+      "category": "Category",
+      "description": "Concise description (20-50 words)",
+      "appearances": Number of appearances
+    }
+  ]
+}
+
+## Example
+
+Input screenplay:
+"Zhang San picked up his phone and made a call. He wore a black suit and a gold watch. There was a painting on the wall."
+
+Output:
+{
+  "props": [
+    {
+      "name": "Phone",
+      "category": "electronic",
+      "description": "Black smartphone used to make a call",
+      "appearances": 1
+    }
+  ]
+}
+
+Note: The black suit, gold watch, and painting on the wall are not extracted because they are outside the extraction scope (clothing, decoration, furniture, food, nature).
+
+Now, please extract props that are **actually used in the plot** from the following screenplay (only extract weapons, vehicles, tools, electronic products), return pure JSON format:
+
+{input}

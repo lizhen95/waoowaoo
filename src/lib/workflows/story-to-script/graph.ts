@@ -19,6 +19,7 @@ export type StoryToScriptGraphInput = {
   content: string
   baseCharacters: string[]
   baseLocations: string[]
+  baseProps?: string[]
   baseCharacterIntroductions: Array<{ name: string; introduction?: string | null }>
   promptTemplates: StoryToScriptPromptTemplates
   runStep: (
@@ -55,6 +56,7 @@ export async function runStoryToScriptGraph(
             concurrency: input.concurrency,
             baseCharacters: input.baseCharacters,
             baseLocations: input.baseLocations,
+            baseProps: input.baseProps,
             baseCharacterIntroductions: input.baseCharacterIntroductions,
             promptTemplates: input.promptTemplates,
             runStep: input.runStep,

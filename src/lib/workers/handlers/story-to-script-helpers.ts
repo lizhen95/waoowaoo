@@ -157,6 +157,7 @@ export async function persistClips(params: {
           summary: clip.summary,
           location: clip.location,
           characters: clip.characters.length > 0 ? JSON.stringify(clip.characters) : null,
+          props: clip.props.length > 0 ? JSON.stringify(clip.props) : null,
           content: clip.content,
         },
         select: {
@@ -175,6 +176,7 @@ export async function persistClips(params: {
         summary: clip.summary,
         location: clip.location,
         characters: clip.characters.length > 0 ? JSON.stringify(clip.characters) : null,
+        props: clip.props.length > 0 ? JSON.stringify(clip.props) : null,
         content: clip.content,
       },
       select: {

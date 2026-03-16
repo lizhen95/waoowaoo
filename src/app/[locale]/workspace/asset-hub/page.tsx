@@ -9,7 +9,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import Navbar from '@/components/Navbar'
 import { FolderSidebar } from './components/FolderSidebar'
 import { AssetGrid } from './components/AssetGrid'
-import { CharacterCreationModal, LocationCreationModal, CharacterEditModal, LocationEditModal } from '@/components/shared/assets'
+import { CharacterCreationModal, LocationCreationModal, CharacterEditModal, LocationEditModal, PropCreationModal, PropEditModal } from '@/components/shared/assets'
 import { FolderModal } from './components/FolderModal'
 import ImagePreviewModal from '@/components/ui/ImagePreviewModal'
 import ImageEditModal from '@/app/[locale]/workspace/[projectId]/modes/novel-promotion/components/assets/ImageEditModal'
@@ -26,6 +26,11 @@ import {
     useModifyLocationImage,
     type GlobalCharacter,
 } from '@/lib/query/hooks'
+import {
+    useGlobalProps,
+    useDeleteGlobalProp,
+    type Prop,
+} from '@/lib/query/hooks/useProps'
 import { queryKeys } from '@/lib/query/keys'
 import { AppIcon } from '@/components/ui/icons'
 import { Link } from '@/i18n/navigation'
@@ -45,17 +50,21 @@ export default function AssetHubPage() {
     const { data: characters = [], isLoading: charactersLoading } = useGlobalCharacters(selectedFolderId)
     const { data: locations = [], isLoading: locationsLoading } = useGlobalLocations(selectedFolderId)
     const { data: voices = [], isLoading: voicesLoading } = useGlobalVoices(selectedFolderId)
+    const { data: props = [], isLoading: propsLoading } = useGlobalProps(selectedFolderId)
 
-    const loading = foldersLoading || charactersLoading || locationsLoading || voicesLoading
+    const loading = foldersLoading || charactersLoading || locationsLoading || voicesLoading || propsLoading
     useSSE({ projectId: 'global-asset-hub', enabled: true })
 
     // Mutation hooks
     const modifyCharacterImage = useModifyCharacterImage()
     const modifyLocationImage = useModifyLocationImage()
+    const deleteGlobalProp = useDeleteGlobalProp()
 
     // 弹窗状态
     const [showAddCharacter, setShowAddCharacter] = useState(false)
     const [showAddLocation, setShowAddLocation] = useState(false)
+    const [showAddProp, setShowAddProp] = useState(false)
+    const [editingProp, setEditingProp] = useState<Prop | null>(null)
     const [showFolderModal, setShowFolderModal] = useState(false)
     const [editingFolder, setEditingFolder] = useState<{ id: string; name: string } | null>(null)
     const [previewImage, setPreviewImage] = useState<string | null>(null)
@@ -449,10 +458,12 @@ export default function AssetHubPage() {
                         characters={characters}
                         locations={locations}
                         voices={voices}
+                        props={props}
                         loading={loading}
                         onAddCharacter={() => setShowAddCharacter(true)}
                         onAddLocation={() => setShowAddLocation(true)}
                         onAddVoice={() => setShowAddVoice(true)}
+                        onAddProp={() => setShowAddProp(true)}
                         onDownloadAll={handleDownloadAll}
                         isDownloading={isDownloading}
                         selectedFolderId={selectedFolderId}
@@ -462,6 +473,11 @@ export default function AssetHubPage() {
                         onCharacterEdit={handleOpenCharacterEdit}
                         onLocationEdit={handleOpenLocationEdit}
                         onVoiceSelect={(characterId) => setVoicePickerCharacterId(characterId)}
+                        onPropEdit={(prop) => setEditingProp(prop)}
+                        onPropDelete={async (propId) => {
+                            if (!confirm(t('confirmDeleteProp'))) return
+                            deleteGlobalProp.mutate(propId)
+                        }}
                     />
                 </div>
             </div>
@@ -475,6 +491,33 @@ export default function AssetHubPage() {
                     onSuccess={() => {
                         setShowAddCharacter(false)
                         queryClient.invalidateQueries({ queryKey: queryKeys.globalAssets.characters() })
+                    }}
+                />
+            )}
+
+            {/* 新建道具弹窗 */}
+            {showAddProp && (
+                <PropCreationModal
+                    mode="asset-hub"
+                    onClose={() => setShowAddProp(false)}
+                    onCreated={() => {
+                        setShowAddProp(false)
+                    }}
+                />
+            )}
+
+            {/* 编辑道具弹窗 */}
+            {editingProp && (
+                <PropEditModal
+                    mode="asset-hub"
+                    propId={editingProp.id}
+                    propName={editingProp.name}
+                    category={editingProp.category}
+                    description={editingProp.description ?? ''}
+                    onClose={() => setEditingProp(null)}
+                    onSave={() => {
+                        setEditingProp(null)
+                        queryClient.invalidateQueries({ queryKey: queryKeys.globalAssets.props() })
                     }}
                 />
             )}

@@ -1,0 +1,94 @@
+You are a professional quality assurance specialist. Your task is to check prop consistency throughout the project.
+
+## Task Requirements
+
+1. **Check visual consistency of props**:
+   - Is the appearance of the same prop consistent across different panels?
+   - Are color, material, and size maintained consistently?
+   - Do wear, damage, and other state changes evolve reasonably?
+
+2. **Check logical consistency of props**:
+   - Are prop appearances and disappearances reasonable?
+   - Do prop state changes align with the plot?
+   - Do prop usage methods comply with physics?
+
+3. **Check prop categorization consistency**:
+   - Are prop categories accurate?
+   - Are there any duplicate or missing props?
+   - Are prop names standardized?
+
+4. **Generate a consistency report** including:
+   - Issues found
+   - Issue severity (High/Medium/Low)
+   - Suggested corrections
+
+## Output Format
+
+Return a JSON object:
+```json
+{
+  "totalProps": Total number of props,
+  "consistencyScore": Consistency score (0-100),
+  "issues": [
+    {
+      "type": "Issue type",
+      "severity": "High/Medium/Low",
+      "propName": "Prop name",
+      "panels": [Panel indices],
+      "description": "Issue description",
+      "suggestion": "Correction suggestion"
+    }
+  ],
+  "summary": "Overall assessment"
+}
+```
+
+## Example
+
+Input:
+```json
+{
+  "props": [
+    {
+      "name": "Red phone",
+      "panels": [
+        {
+          "panelIndex": 2,
+          "description": "Li Ming holding a red iPhone"
+        },
+        {
+          "panelIndex": 5,
+          "description": "Li Ming's black phone on the desk"
+        },
+        {
+          "panelIndex": 8,
+          "description": "Li Ming picks up red phone to answer call"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Output:
+```json
+{
+  "totalProps": 1,
+  "consistencyScore": 40,
+  "issues": [
+    {
+      "type": "Color inconsistency",
+      "severity": "High",
+      "propName": "Phone",
+      "panels": [2, 5, 8],
+      "description": "Phone is red in panels 2 and 8, but black in panel 5. This is a clear color inconsistency.",
+      "suggestion": "Unify phone color. Recommend using red as the standard color and correct panel 5's description."
+    }
+  ],
+  "summary": "Found 1 high-severity issue. Recommend correcting the color inconsistency to improve visual continuity."
+}
+```
+
+Now, please check the consistency of the following props:
+
+Props list: {propsList}

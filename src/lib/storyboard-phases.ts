@@ -62,6 +62,7 @@ type NovelPromotionAssetData = {
     analysisModel: string
     characters: CharacterAsset[]
     locations: LocationAsset[]
+    props?: Array<{ id: string; name: string; category: string }>
 }
 
 export type StoryboardPanel = JsonRecord & {
@@ -277,6 +278,7 @@ export async function executePhase1(
     // 构建资产信息
     const charactersLibName = novelPromotionData.characters.map((c) => c.name).join(', ') || '无'
     const locationsLibName = novelPromotionData.locations.map((l) => l.name).join(', ') || '无'
+    const propsLibName = (novelPromotionData.props || []).map((p) => p.name).join(', ') || '无'
     const filteredAppearanceList = getFilteredAppearanceList(novelPromotionData.characters, clipCharacters)
     const filteredFullDescription = getFilteredFullDescription(novelPromotionData.characters, clipCharacters)
     const charactersIntroduction = buildCharactersIntroduction(novelPromotionData.characters)
@@ -299,6 +301,7 @@ export async function executePhase1(
     let planPrompt = planPromptTemplate
         .replace('{characters_lib_name}', charactersLibName)
         .replace('{locations_lib_name}', locationsLibName)
+        .replace('{props_lib_name}', propsLibName)
         .replace('{characters_introduction}', charactersIntroduction)
         .replace('{characters_appearance_list}', filteredAppearanceList)
         .replace('{characters_full_description}', filteredFullDescription)

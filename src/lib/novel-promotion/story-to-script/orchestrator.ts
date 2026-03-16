@@ -34,6 +34,7 @@ export type StoryToScriptClipCandidate = {
   summary: string
   location: string | null
   characters: string[]
+  props: string[]
   content: string
   matchLevel: ClipMatchLevel
   matchConfidence: number
@@ -50,6 +51,7 @@ export type StoryToScriptScreenplayResult = {
 export type StoryToScriptPromptTemplates = {
   characterPromptTemplate: string
   locationPromptTemplate: string
+  propPromptTemplate?: string
   clipPromptTemplate: string
   screenplayPromptTemplate: string
 }
@@ -59,6 +61,7 @@ export type StoryToScriptOrchestratorInput = {
   content: string
   baseCharacters: string[]
   baseLocations: string[]
+  baseProps?: string[]
   baseCharacterIntroductions: Array<{ name: string; introduction?: string | null }>
   promptTemplates: StoryToScriptPromptTemplates
   runStep: (
@@ -74,19 +77,24 @@ export type StoryToScriptOrchestratorInput = {
 export type StoryToScriptOrchestratorResult = {
   characterStep: StoryToScriptStepOutput
   locationStep: StoryToScriptStepOutput
+  propStep?: StoryToScriptStepOutput
   splitStep: StoryToScriptStepOutput
   charactersObject: Record<string, unknown>
   locationsObject: Record<string, unknown>
+  propsObject?: Record<string, unknown>
   analyzedCharacters: Record<string, unknown>[]
   analyzedLocations: Record<string, unknown>[]
+  analyzedProps?: Record<string, unknown>[]
   charactersLibName: string
   locationsLibName: string
+  propsLibName?: string
   charactersIntroduction: string
   clipList: StoryToScriptClipCandidate[]
   screenplayResults: StoryToScriptScreenplayResult[]
   summary: {
     characterCount: number
     locationCount: number
+    propCount?: number
     clipCount: number
     screenplaySuccessCount: number
     screenplayFailedCount: number
@@ -237,6 +245,7 @@ export async function runStoryToScriptOrchestrator(
     content,
     baseCharacters,
     baseLocations,
+    baseProps = [],
     baseCharacterIntroductions,
     promptTemplates,
     runStep,
@@ -250,6 +259,7 @@ export async function runStoryToScriptOrchestrator(
 
   const baseCharactersText = baseCharacters.length > 0 ? baseCharacters.join('、') : '无'
   const baseLocationsText = baseLocations.length > 0 ? baseLocations.join('、') : '无'
+  const basePropsText = baseProps.length > 0 ? baseProps.join('、') : '无'
   const baseCharacterInfo = baseCharacterIntroductions.length > 0
     ? baseCharacterIntroductions.map((item, index) => `${index + 1}. ${item.name}`).join('\n')
     : '暂无已有角色'
@@ -264,59 +274,96 @@ export async function runStoryToScriptOrchestrator(
     locations_lib_name: baseLocationsText,
   })
 
-  onLog?.('开始步骤1：角色/场景分析（并行）')
+  const analysisSteps = [
+    () => runStepWithRetry(
+      runStep,
+      {
+        stepId: 'analyze_characters',
+        stepTitle: 'progress.streamStep.analyzeCharacters',
+        stepIndex: 1,
+        stepTotal: 2,
+        groupId: 'analysis',
+        parallelKey: 'characters',
+        retryable: true,
+      },
+      characterPrompt,
+      'analyze_characters',
+      2200,
+      safeParseJsonObject,
+    ),
+    () => runStepWithRetry(
+      runStep,
+      {
+        stepId: 'analyze_locations',
+        stepTitle: 'progress.streamStep.analyzeLocations',
+        stepIndex: 2,
+        stepTotal: 2,
+        groupId: 'analysis',
+        parallelKey: 'locations',
+        retryable: true,
+      },
+      locationPrompt,
+      'analyze_locations',
+      2200,
+      safeParseJsonObject,
+    ),
+  ]
+
+  // 如果有道具提示词模板，添加道具分析步骤
+  if (promptTemplates.propPromptTemplate) {
+    const propPrompt = applyTemplate(promptTemplates.propPromptTemplate, {
+      input: content,
+      props_lib_name: basePropsText,
+    })
+    analysisSteps.push(
+      () => runStepWithRetry(
+        runStep,
+        {
+          stepId: 'analyze_props',
+          stepTitle: 'progress.streamStep.analyzeProps',
+          stepIndex: 3,
+          stepTotal: 3,
+          groupId: 'analysis',
+          parallelKey: 'props',
+          retryable: true,
+        },
+        propPrompt,
+        'analyze_props',
+        2200,
+        safeParseJsonObject,
+      ),
+    )
+  }
+
+  onLog?.('开始步骤1：角色/场景/道具分析（并行）')
   const analysisResults = await mapWithConcurrency(
-    [
-      () => runStepWithRetry(
-        runStep,
-        {
-          stepId: 'analyze_characters',
-          stepTitle: 'progress.streamStep.analyzeCharacters',
-          stepIndex: 1,
-          stepTotal: 2,
-          groupId: 'analysis',
-          parallelKey: 'characters',
-          retryable: true,
-        },
-        characterPrompt,
-        'analyze_characters',
-        2200,
-        safeParseJsonObject,
-      ),
-      () => runStepWithRetry(
-        runStep,
-        {
-          stepId: 'analyze_locations',
-          stepTitle: 'progress.streamStep.analyzeLocations',
-          stepIndex: 2,
-          stepTotal: 2,
-          groupId: 'analysis',
-          parallelKey: 'locations',
-          retryable: true,
-        },
-        locationPrompt,
-        'analyze_locations',
-        2200,
-        safeParseJsonObject,
-      ),
-    ],
+    analysisSteps,
     concurrency,
     async (run) => await run(),
   )
   const { output: characterStep, parsed: charactersObject } = analysisResults[0]
   const { output: locationStep, parsed: locationsObject } = analysisResults[1]
+  const propStep = analysisResults[2]?.output
+  const propsObject = analysisResults[2]?.parsed as Record<string, unknown> | undefined
 
   const analyzedCharacters = extractAnalyzedCharacters(charactersObject)
   const analyzedLocations = extractAnalyzedLocations(locationsObject)
+  const analyzedProps = propsObject ? toObjectArray(propsObject.props) : []
 
-  const analyzedCharacterNames = analyzedCharacters
+  const analyzedPropNames = analyzedProps
     .map((item) => asString(item.name).trim())
     .filter(Boolean)
+  const propsLibName = analyzedPropNames.length > 0
+    ? analyzedPropNames.join('、')
+    : basePropsText
   const analyzedLocationNames = analyzedLocations
     .map((item) => asString(item.name).trim())
     .filter(Boolean)
 
   // 合并新发现角色与已有角色库（新角色优先，已有角色补充），避免已有角色被覆盖丢失
+  const analyzedCharacterNames = analyzedCharacters
+    .map((item) => asString(item.name).trim())
+    .filter(Boolean)
   const analyzedCharacterNameSet = new Set(analyzedCharacterNames)
   const mergedCharacterNames = [
     ...analyzedCharacterNames,
@@ -361,6 +408,7 @@ export async function runStoryToScriptOrchestrator(
     input: content,
     locations_lib_name: locationsLibName || '无',
     characters_lib_name: charactersLibName || '无',
+    props_lib_name: propsLibName || '无',
     characters_introduction: charactersIntroduction || '暂无角色介绍',
   })
   const splitPrompt = `${splitPromptBase}${CLIP_BOUNDARY_SUFFIX}`
@@ -420,6 +468,7 @@ export async function runStoryToScriptOrchestrator(
         summary: asString(item.summary),
         location: asString(item.location) || null,
         characters: toStringArray(item.characters),
+        props: toStringArray(item.props),
         content: content.slice(match.startIndex, match.endIndex),
         matchLevel: match.level,
         matchConfidence: match.confidence,
@@ -480,6 +529,7 @@ export async function runStoryToScriptOrchestrator(
           clip_content: clip.content,
           locations_lib_name: locationsLibName || '无',
           characters_lib_name: charactersLibName || '无',
+          props_lib_name: propsLibName || '无',
           characters_introduction: charactersIntroduction || '暂无角色介绍',
           clip_id: clip.id,
         })
@@ -519,19 +569,24 @@ export async function runStoryToScriptOrchestrator(
   return {
     characterStep,
     locationStep,
+    propStep,
     splitStep,
     charactersObject,
     locationsObject,
+    propsObject,
     analyzedCharacters,
     analyzedLocations,
+    analyzedProps,
     charactersLibName,
     locationsLibName,
+    propsLibName,
     charactersIntroduction,
     clipList,
     screenplayResults,
     summary: {
       characterCount: analyzedCharacters.length,
       locationCount: analyzedLocations.length,
+      propCount: analyzedProps.length,
       clipCount: clipList.length,
       screenplaySuccessCount,
       screenplayFailedCount,

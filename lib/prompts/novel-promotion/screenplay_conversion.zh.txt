@@ -242,6 +242,9 @@ Clip原文：
 角色资产库（优先匹配，无匹配时可使用原文名称）：
 {characters_lib_name}
 
+道具资产库（优先匹配，无匹配时可使用原文名称）：
+{props_lib_name}
+
 角色介绍（⭐重要：用于理解"我"和称呼对应的角色以及角色关系）：
 {characters_introduction}
 

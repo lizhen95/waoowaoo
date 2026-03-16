@@ -13,6 +13,9 @@ Location library:
 Character library:
 {characters_lib_name}
 
+Props library:
+{props_lib_name}
+
 Character introductions:
 {characters_introduction}
 

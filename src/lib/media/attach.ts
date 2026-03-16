@@ -199,6 +199,28 @@ async function attachMediaFieldsToVoiceLine<T extends Record<string, unknown>>(l
   }
 }
 
+async function attachMediaFieldsToProjectProp<T extends Record<string, unknown>>(prop: T) {
+  const images = await Promise.all(
+    ((prop.images as Array<Record<string, unknown>>) || []).map(async (img) => {
+      const imageMedia = await resolveMediaRef(img.imageMediaId, img.imageUrl)
+      const previousImageMedia = await resolveMediaRef(img.previousImageMediaId, img.previousImageUrl)
+      return {
+        ...img,
+        media: imageMedia,
+        imageMedia,
+        previousImageMedia,
+        imageUrl: imageMedia?.url || img.imageUrl || null,
+        previousImageUrl: previousImageMedia?.url || img.previousImageUrl || null,
+      }
+    }),
+  )
+
+  return {
+    ...prop,
+    images,
+  }
+}
+
 export async function attachMediaFieldsToProject<T extends Record<string, unknown>>(projectLike: T) {
   const audioMedia = await resolveMediaRef(projectLike.audioMediaId, projectLike.audioUrl)
   const characters = await Promise.all(
@@ -206,6 +228,9 @@ export async function attachMediaFieldsToProject<T extends Record<string, unknow
   )
   const locations = await Promise.all(
     ((projectLike.locations as Array<Record<string, unknown>>) || []).map(attachMediaFieldsToProjectLocation),
+  )
+  const props = await Promise.all(
+    ((projectLike.props as Array<Record<string, unknown>>) || []).map(attachMediaFieldsToProjectProp),
   )
   const shots = await Promise.all(
     ((projectLike.shots as Array<Record<string, unknown>>) || []).map(attachMediaFieldsToShot),
@@ -224,6 +249,7 @@ export async function attachMediaFieldsToProject<T extends Record<string, unknow
     audioUrl: audioMedia?.url || projectLike.audioUrl || null,
     characters,
     locations,
+    props,
     shots,
     storyboards,
     voiceLines,

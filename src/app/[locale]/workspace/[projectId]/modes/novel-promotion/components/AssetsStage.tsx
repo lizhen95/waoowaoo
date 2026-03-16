@@ -23,6 +23,7 @@ import {
   useGenerateProjectLocationImage,
   useProjectAssets,
   useRefreshProjectAssets,
+  useProjectProps,
 } from '@/lib/query/hooks'
 
 // Hooks
@@ -39,6 +40,7 @@ import { useAssetsImageEdit } from './assets/hooks/useAssetsImageEdit'
 // Components
 import CharacterSection from './assets/CharacterSection'
 import LocationSection from './assets/LocationSection'
+import { PropGrid } from '@/components/shared/assets/PropGrid'
 import AssetToolbar from './assets/AssetToolbar'
 import AssetsStageStatusOverlays from './assets/AssetsStageStatusOverlays'
 import UnconfirmedProfilesSection from './assets/UnconfirmedProfilesSection'
@@ -64,9 +66,11 @@ export default function AssetsStage({
 }: AssetsStageProps) {
   // 🔥 V6.5 重构：直接订阅缓存，消除 props drilling
   const { data: assets } = useProjectAssets(projectId)
+  const { data: projectProps } = useProjectProps(projectId)
   // 🔧 使用 useMemo 稳定引用，防止 useCallback/useEffect 依赖问题
   const characters = useMemo(() => assets?.characters ?? [], [assets?.characters])
   const locations = useMemo(() => assets?.locations ?? [], [assets?.locations])
+  const props = useMemo(() => projectProps ?? [], [projectProps])
   // 🔥 使用 React Query 刷新，替代 onRefresh prop
   const refreshAssets = useRefreshProjectAssets(projectId)
   const onRefresh = useCallback(() => { refreshAssets() }, [refreshAssets])
@@ -350,6 +354,13 @@ export default function AssetsStage({
         onImageClick={setPreviewImage}
         onImageEdit={(locId, imgIdx) => handleOpenLocationImageEdit(locId, imgIdx)}
         onCopyFromGlobal={handleCopyLocationFromGlobal}
+      />
+
+      {/* 道具资产区块 */}
+      <PropGrid
+        projectId={projectId}
+        props={props}
+        mode="project"
       />
 
       <AssetsStageModals

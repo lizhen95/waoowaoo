@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Character, Location } from '@/types/project'
 import { useProjectAssets } from '@/lib/query/hooks/useProjectAssets'
+import { useProjectProps } from '@/lib/query/hooks/useProps'
 import { resolveTaskPresentationState } from '@/lib/task/presentation'
 import {
   fuzzyMatchLocation as fuzzyMatchLocationFromModule,
@@ -29,6 +30,7 @@ interface Clip {
   screenplay?: string | null
   characters: string | null
   location: string | null
+  props?: string | null
 }
 
 interface Panel {
@@ -90,9 +92,11 @@ export default function ScriptView({
   const { data: assets } = useProjectAssets(projectId)
   const characters: Character[] = useMemo(() => assets?.characters ?? [], [assets?.characters])
   const locations: Location[] = useMemo(() => assets?.locations ?? [], [assets?.locations])
+  const { data: props = [] } = useProjectProps(projectId)
 
   const [activeCharIds, setActiveCharIds] = useState<string[]>([])
   const [activeLocationIds, setActiveLocationIds] = useState<string[]>([])
+  const [activePropIds, setActivePropIds] = useState<string[]>([])
   const [selectedAppearanceKeys, setSelectedAppearanceKeys] = useState<Set<string>>(new Set())
 
   const isManuallyEditingRef = useRef(false)
@@ -168,13 +172,27 @@ export default function ScriptView({
       .filter((l) => Array.from(locNames).some((clipLocName) => fuzzyMatchLocation(clipLocName, l.name)))
       .map((l) => l.id)
 
+    const matchedPropIds = props
+      .filter((p) => {
+        if (assetViewMode === 'all') {
+          const all = getAllClipsAssets()
+          return all.allPropNames.has(p.name)
+        }
+        const clip = clips.find((c) => c.id === assetViewMode)
+        if (!clip) return false
+        const parsed = parseClipAssets(clip)
+        return parsed.propNames.has(p.name)
+      })
+      .map((p) => p.id)
+
     setActiveCharIds(matchedCharIds)
     setActiveLocationIds(matchedLocIds)
+    setActivePropIds(matchedPropIds)
     setSelectedAppearanceKeys(newSelectedKeys)
-  }, [assetViewMode, characters, clips, getAllClipsAssets, locations])
+  }, [assetViewMode, characters, clips, getAllClipsAssets, locations, props])
 
   const handleUpdateClipAssets = async (
-    type: 'character' | 'location',
+    type: 'character' | 'location' | 'prop',
     action: 'add' | 'remove',
     id: string,
     optionLabel?: string,
@@ -265,42 +283,85 @@ export default function ScriptView({
       return
     }
 
-    const targetLoc = locations.find((l) => l.id === id)
-    if (!targetLoc) return
+    if (type === 'location') {
+      const targetLoc = locations.find((l) => l.id === id)
+      if (!targetLoc) return
 
-    if (isAllMode && action === 'remove') {
-      for (const clip of clips) {
-        const newValue = processLocationInClip({
-          clip,
-          action: 'remove',
-          targetLoc,
-          fuzzyMatchLocation,
-        })
-        if (newValue !== null) {
-          await onClipUpdate(clip.id, { location: newValue })
+      if (isAllMode && action === 'remove') {
+        for (const clip of clips) {
+          const newValue = processLocationInClip({
+            clip,
+            action: 'remove',
+            targetLoc,
+            fuzzyMatchLocation,
+          })
+          if (newValue !== null) {
+            await onClipUpdate(clip.id, { location: newValue })
+          }
         }
+        setActiveLocationIds(activeLocationIds.filter((lid) => lid !== id))
+        return
       }
-      setActiveLocationIds(activeLocationIds.filter((lid) => lid !== id))
+
+      const clip = clips.find((c) => c.id === targetClipId)
+      if (!clip) return
+
+      const newValue = processLocationInClip({
+        clip,
+        action,
+        targetLoc,
+        locationName: optionLabel,
+        fuzzyMatchLocation,
+      })
+
+      const newActiveIds =
+        action === 'add' ? [...activeLocationIds, id] : activeLocationIds.filter((lid) => lid !== id)
+      setActiveLocationIds(newActiveIds)
+
+      if (newValue !== null) {
+        await onClipUpdate(targetClipId!, { location: newValue })
+      }
       return
     }
 
-    const clip = clips.find((c) => c.id === targetClipId)
-    if (!clip) return
+    if (type === 'prop') {
+      const targetProp = props.find((p) => p.id === id)
+      if (!targetProp) return
 
-    const newValue = processLocationInClip({
-      clip,
-      action,
-      targetLoc,
-      locationName: optionLabel,
-      fuzzyMatchLocation,
-    })
+      const getClipPropNames = (clip: Clip): string[] => {
+        if (!clip.props) return []
+        try {
+          const parsed = JSON.parse(clip.props)
+          if (Array.isArray(parsed)) return parsed.map((item) => typeof item === 'string' ? item : String((item as { name?: unknown })?.name || '')).filter(Boolean)
+        } catch {
+          return clip.props.split(',').map((p) => p.trim()).filter(Boolean)
+        }
+        return []
+      }
 
-    const newActiveIds =
-      action === 'add' ? [...activeLocationIds, id] : activeLocationIds.filter((lid) => lid !== id)
-    setActiveLocationIds(newActiveIds)
+      if (isAllMode && action === 'remove') {
+        for (const clip of clips) {
+          const names = getClipPropNames(clip).filter((n) => n !== targetProp.name)
+          await onClipUpdate(clip.id, { props: JSON.stringify(names) })
+        }
+        setActivePropIds(activePropIds.filter((pid) => pid !== id))
+        return
+      }
 
-    if (newValue !== null) {
-      await onClipUpdate(targetClipId!, { location: newValue })
+      const clip = clips.find((c) => c.id === targetClipId)
+      if (!clip) return
+
+      const names = getClipPropNames(clip)
+      const newNames = action === 'add'
+        ? [...new Set([...names, targetProp.name])]
+        : names.filter((n) => n !== targetProp.name)
+
+      const newActiveIds = action === 'add'
+        ? [...activePropIds, id]
+        : activePropIds.filter((pid) => pid !== id)
+      setActivePropIds(newActiveIds)
+
+      await onClipUpdate(targetClipId!, { props: JSON.stringify(newNames) })
     }
   }
 
@@ -320,7 +381,7 @@ export default function ScriptView({
     }
   }
 
-  const { allCharNames: globalCharNames, allLocNames: globalLocNames } = getAllClipsAssets()
+  const { allCharNames: globalCharNames, allLocNames: globalLocNames, allPropNames: globalPropNames } = getAllClipsAssets()
 
   const globalCharIds = characters
     .filter((c) => {
@@ -332,6 +393,10 @@ export default function ScriptView({
   const globalLocationIds = locations
     .filter((l) => Array.from(globalLocNames).some((clipLocName) => fuzzyMatchLocation(clipLocName, l.name)))
     .map((l) => l.id)
+
+  const globalPropIds = props
+    .filter((p) => globalPropNames.has(p.name))
+    .map((p) => p.id)
 
   const globalActiveChars = characters.filter((c) => globalCharIds.includes(c.id))
   const globalActiveLocations = locations.filter((l) => globalLocationIds.includes(l.id))
@@ -373,8 +438,10 @@ export default function ScriptView({
         setSelectedClipId={setSelectedClipId}
         characters={characters}
         locations={locations}
+        props={props}
         activeCharIds={activeCharIds}
         activeLocationIds={activeLocationIds}
+        activePropIds={activePropIds}
         selectedAppearanceKeys={selectedAppearanceKeys}
         onUpdateClipAssets={handleUpdateClipAssets}
         onOpenAssetLibrary={onOpenAssetLibrary}
@@ -383,6 +450,7 @@ export default function ScriptView({
         allAssetsHaveImages={allAssetsHaveImages}
         globalCharIds={globalCharIds}
         globalLocationIds={globalLocationIds}
+        globalPropIds={globalPropIds}
         missingAssetsCount={missingAssetsCount}
         onGenerateStoryboard={onGenerateStoryboard}
         isSubmittingStoryboardBuild={isSubmittingStoryboardBuild}

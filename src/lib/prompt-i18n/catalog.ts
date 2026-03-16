@@ -119,6 +119,10 @@ export const PROMPT_CATALOG: Record<PromptId, PromptCatalogEntry> = {
     pathStem: 'novel-promotion/location_regenerate',
     variableKeys: ['location_name', 'current_descriptions'],
   },
+  [PROMPT_IDS.NP_PROP_EXTRACT]: {
+    pathStem: 'novel-promotion/prop_extract',
+    variableKeys: ['input', 'props_lib_name'],
+  },
   [PROMPT_IDS.NP_SCREENPLAY_CONVERSION]: {
     pathStem: 'novel-promotion/screenplay_conversion',
     variableKeys: ['clip_content', 'locations_lib_name', 'characters_lib_name', 'characters_introduction', 'clip_id'],

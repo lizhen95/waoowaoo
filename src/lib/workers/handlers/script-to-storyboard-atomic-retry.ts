@@ -321,6 +321,7 @@ export async function runScriptToStoryboardAtomicRetry(params: {
   novelPromotionData: {
     characters: CharacterAsset[]
     locations: LocationAsset[]
+    props?: Array<{ name: string }>
   }
   promptTemplates: ScriptToStoryboardPromptTemplates
   runStep: StepRunner

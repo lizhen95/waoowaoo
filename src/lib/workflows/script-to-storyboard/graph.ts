@@ -20,6 +20,7 @@ type ClipInput = {
 type NovelPromotionData = {
   characters: CharacterAsset[]
   locations: LocationAsset[]
+  props?: Array<{ name: string }>
 }
 
 export type ScriptToStoryboardGraphState = PipelineGraphState & {
